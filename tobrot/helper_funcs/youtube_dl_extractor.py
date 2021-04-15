@@ -19,6 +19,7 @@ async def extract_youtube_dl_formats(
         "youtube-dl",
         "--no-warnings",
         "--youtube-skip-dash-manifest",
+        "--no-check-certificate",
         "-j",
         url,
     ]
@@ -45,7 +46,7 @@ async def extract_youtube_dl_formats(
     e_response = stderr.decode().strip()
     LOGGER.info(e_response)
     t_response = stdout.decode().strip()
-    LOGGER.info(t_response)
+    # LOGGER.info(t_response)
     # https://github.com/rg3/youtube-dl/issues/2630#issuecomment-38635239
     if e_response:
         # logger.warn("Status : FAIL", exc.returncode, exc.output)
@@ -72,6 +73,7 @@ async def extract_youtube_dl_formats(
         #
         thumb_image = DEF_THUMB_NAIL_VID_S
         #
+        # LOGGER.info(response_json)
         for current_r_json in response_json:
             #
             thumb_image = current_r_json.get("thumbnail", thumb_image)

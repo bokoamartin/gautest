@@ -30,8 +30,6 @@ A Telegram Torrent (and youtube-dl) Leecher based on [Pyrogram](https://github.c
 -   [ ] Password support while Unarchiving the files.
 -   [ ] Selection of required files during leeching the big files using aria(/leech command)
 
-### Credit goes to SpEcHiDe for his Publicleech repo.
-
 ## installing...
 
 ### The Easy Way
@@ -65,8 +63,6 @@ cd torrentleech-gdrive
 - Install requirements
 For Debian based distros
 ```
-sudo apt install python3
-
 sudo snap install docker
 ```
 Install Docker by following the [official docker docs](https://docs.docker.com/engine/install/debian/)
@@ -113,7 +109,7 @@ sudo docker build . -t torrentleech-gdrive
 ```
 sudo docker run torrentleech-gdrive
 ```
-
+Follow this [Video Tutorial](https://youtu.be/J3tMbngA9DE)
 ### The Legacy Way
 Simply clone the repository and run the main file:
 
@@ -178,11 +174,15 @@ python3 -m tobrot
 
 * `YTDL_COMMAND`
 
+* `GYTDL_COMMAND`
+
 * `GLEECH_COMMAND`
 
-* `TELEGRAM_LEECH_COMMAND_G`
+* `TELEGRAM_LEECH_COMMAND`
 
-* `PYTDL_COMMAND_G`
+* `TELEGRAM_LEECH_UNZIP_COMMAND`
+
+* `PYTDL_COMMAND`
 
 * `CLONE_COMMAND_G`
 
@@ -216,37 +216,25 @@ python3 -m tobrot
 
 * `/pytdl`: This command will download videos from youtube playlist link and will upload to telegram.
 
-* `/ytdl gdrive`: This will download and upload to your cloud.
+* `/gytdl`: This will download and upload to your cloud.
 
-* `/pytdl gdrive`: This download youtube playlist and upload to your cloud.
+* `/gpytdl`: This download youtube playlist and upload to your cloud.
 
 * `/leech`: This command should be used as reply to a magnetic link, a torrent link, or a direct link. [this command will SPAM the chat and send the downloads a seperate files, if there is more than one file, in the specified torrent]
 
-* `/leech archive`: This command should be used as reply to a magnetic link, a torrent link, or a direct link. [This command will create a .tar.gz file of the output directory, and send the files in the chat, splited into PARTS of 1024MiB each, due to Telegram limitations]
+* `/leechzip`: This command should be used as reply to a magnetic link, a torrent link, or a direct link. [This command will create a .tar.gz file of the output directory, and send the files in the chat, splited into PARTS of 1024MiB each, due to Telegram limitations]
 
 * `/gleech`: This command should be used as reply to a magnetic link, a torrent link, or a direct link. And this will download the files from the given link or torrent and will upload to the cloud using rclone.
 
-* `/gleech archive` This command will compress the folder/file and will upload to your cloud.
+* `/gleechzip` This command will compress the folder/file and will upload to your cloud.
 
-* `/leech unzip`: This will unzip the .zip file and dupload to telegram.
+* `/leechunzip`: This will unarchive file and dupload to telegram.
 
-* `/gleech unzip`: This will unzip the .zip file and upload to cloud.
-
-* `/leech unrar`: This will unrar the .rar file and dupload to telegram.
-
-* `/gleech unrar`: This will unrar the .rar file and upload to cloud.
-
-* `/leech untar`: This will untar the .tar file and upload to telegram.
-
-* `/gleech untar`: This will untar the .tar file and upload to cloud..
+* `/gleechunzip`: This will unarchive file and upload to cloud.
 
 * `/tleech`: This will mirror the telegram files to ur respective cloud cloud.
 
-* `/tleech unzip`: This will unzip the .zip telegram file and upload to cloud.
-
-* `/tleech unrar`: This will unrar the .rar telegram file and upload to cloud.
-
-* `/tleech untar`: This will untar the .tar telegram file and upload to cloud.
+* `/tleechunzip`: This will unarchive telegram file and upload to cloud.
 
 * `/getsize`: This will give you total size of your destination folder in cloud.
 

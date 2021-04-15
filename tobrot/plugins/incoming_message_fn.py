@@ -6,18 +6,28 @@ import asyncio
 import logging
 import os
 import time
-
+from pathlib import Path
 import aria2p
 import requests
-from tobrot import DOWNLOAD_LOCATION, LOGGER
+from tobrot import (
+    DOWNLOAD_LOCATION,
+    GLEECH_COMMAND,
+    GLEECH_UNZIP_COMMAND,
+    GLEECH_ZIP_COMMAND,
+    LEECH_COMMAND,
+    LEECH_UNZIP_COMMAND,
+    LEECH_ZIP_COMMAND,
+    LOGGER,
+    YTDL_COMMAND,
+    GPYTDL_COMMAND,
+    PYTDL_COMMAND,
+)
 from tobrot.helper_funcs.admin_check import AdminCheck
 from tobrot.helper_funcs.cloneHelper import CloneHelper
-from tobrot.helper_funcs.display_progress import progress_for_pyrogram
 from tobrot.helper_funcs.download import download_tg
 from tobrot.helper_funcs.download_aria_p_n import (
     aria_start,
     call_apropriate_function,
-    call_apropriate_function_g,
 )
 from tobrot.helper_funcs.download_from_link import request_download
 from tobrot.helper_funcs.extract_link_from_message import extract_link
@@ -28,6 +38,7 @@ from tobrot.helper_funcs.ytplaylist import yt_playlist_downg
 
 async def incoming_purge_message_f(client, message):
     """/purge command"""
+    print(message.client)
     i_m_sefg2 = await message.reply_text("Purging...", quote=True)
     if await AdminCheck(client, message.chat.id, message.from_user.id):
         aria_i_p = await aria_start()
@@ -39,34 +50,30 @@ async def incoming_purge_message_f(client, message):
 
 
 async def incoming_message_f(client, message):
-    """/leech command"""
+    """/leech command or /gleech command"""
+    user_command = message.command[0]
     g_id = message.from_user.id
     credit = await message.reply_text(
         f"🧲 Leeching for you <a href='tg://user?id={g_id}'>🤕</a>", parse_mode="html"
     )
-    i_m_sefg = await message.reply_text("processing", quote=True)
-    is_zip = False
-    is_unzip = False
-    is_unrar = False
-    is_untar = False
-    if len(message.command) > 1:
-        if message.command[1].lower() == "archive":
-            is_zip = True
-        elif message.command[1].lower() == "unzip":
-            is_unzip = True
-        elif message.command[1].lower() == "unrar":
-            is_unrar = True
-        elif message.command[1].lower() == "untar":
-            is_untar = True
+    i_m_sefg = await message.reply_text("processing...", quote=True)
     # get link from the incoming message
-    dl_url, cf_name, _, _ = await extract_link(message.reply_to_message, "LEECH")
-    LOGGER.info(dl_url)
-    LOGGER.info(cf_name)
+    if message.reply_to_message:
+        dl_url, cf_name, _, _ = await extract_link(message.reply_to_message, "LEECH")
+        LOGGER.info(dl_url)
+        LOGGER.info(cf_name)
+    elif len(message.command) == 2:
+        dl_url = message.command[1]
+        LOGGER.info(dl_url)
+        cf_name = None
+    else:
+        await i_m_sefg.edit("😔 No downloading source provided 🙄")
+        return
     if dl_url is not None:
         await i_m_sefg.edit_text("extracting links")
         # start the aria2c daemon
         aria_i_p = await aria_start()
-        LOGGER.info(aria_i_p)
+        # LOGGER.info(aria_i_p)
         current_user_id = message.from_user.id
         # create an unique directory
         new_download_location = os.path.join(
@@ -77,6 +84,23 @@ async def incoming_message_f(client, message):
             os.makedirs(new_download_location)
         await i_m_sefg.edit_text("trying to download")
         # try to download the "link"
+        is_zip = False
+        is_cloud = False
+        is_unzip = False
+
+        if user_command == LEECH_UNZIP_COMMAND.lower():
+            is_unzip = True
+        elif user_command == LEECH_ZIP_COMMAND.lower():
+            is_zip = True
+
+        if user_command == GLEECH_COMMAND.lower():
+            is_cloud = True
+        if user_command == GLEECH_UNZIP_COMMAND.lower():
+            is_cloud = True
+            is_unzip = True
+        elif user_command == GLEECH_ZIP_COMMAND.lower():
+            is_cloud = True
+            is_zip = True
         sagtus, err_message = await call_apropriate_function(
             aria_i_p,
             dl_url,
@@ -84,10 +108,10 @@ async def incoming_message_f(client, message):
             i_m_sefg,
             is_zip,
             cf_name,
+            is_cloud,
             is_unzip,
-            is_unrar,
-            is_untar,
             message,
+            client,
         )
         if not sagtus:
             # if FAILED, display the error message
@@ -99,88 +123,34 @@ async def incoming_message_f(client, message):
         )
 
 
-#
-
-
-async def incoming_gdrive_message_f(client, message):
-    """/gleech command"""
-    g_id = message.from_user.id
-    credit = await message.reply_text(
-        f"🧲 Leeching for you <a href='tg://user?id={g_id}'>🤕</a>", parse_mode="html"
-    )
-    i_m_sefg = await message.reply_text("processing", quote=True)
-    is_zip = False
-    is_unzip = False
-    is_unrar = False
-    is_untar = False
-    if len(message.command) > 1:
-        if message.command[1].lower() == "archive":
-            is_zip = True
-        elif message.command[1].lower() == "unzip":
-            is_unzip = True
-        elif message.command[1].lower() == "unrar":
-            is_unrar = True
-        elif message.command[1].lower() == "untar":
-            is_untar = True
-    # get link from the incoming message
-    dl_url, cf_name, _, _ = await extract_link(message.reply_to_message, "GLEECH")
-    LOGGER.info(dl_url)
-    LOGGER.info(cf_name)
-    if dl_url is not None:
-        await i_m_sefg.edit_text("extracting links")
-        # start the aria2c daemon
-        aria_i_p = await aria_start()
-        LOGGER.info(aria_i_p)
-        current_user_id = message.from_user.id
-        # create an unique directory
-        new_download_location = os.path.join(
-            DOWNLOAD_LOCATION, str(current_user_id), str(time.time())
-        )
-        # create download directory, if not exist
-        if not os.path.isdir(new_download_location):
-            os.makedirs(new_download_location)
-        await i_m_sefg.edit_text("trying to download")
-        # try to download the "link"
-        await call_apropriate_function_g(
-            aria_i_p,
-            dl_url,
-            new_download_location,
-            i_m_sefg,
-            is_zip,
-            cf_name,
-            is_unzip,
-            is_unrar,
-            is_untar,
-            message,
-        )
-    else:
-        await i_m_sefg.edit_text(
-            "**FCUK**! wat have you entered. \nPlease read /help \n"
-            f"<b>API Error</b>: {cf_name}"
-        )
-
-
 async def incoming_youtube_dl_f(client, message):
     """ /ytdl command """
-    g_id = message.from_user.id
+    current_user_id = message.from_user.id
     credit = await message.reply_text(
-        f"💀 Downloading for you <a href='tg://user?id={g_id}'>🤕</a>", parse_mode="html"
+        f"💀 Downloading for you <a href='tg://user?id={current_user_id}'>🤕</a>",
+        parse_mode="html",
     )
-    i_m_sefg = await message.reply_text("processing", quote=True)
+    i_m_sefg = await message.reply_text("processing...", quote=True)
     # LOGGER.info(message)
     # extract link from message
-    dl_url, cf_name, yt_dl_user_name, yt_dl_pass_word = await extract_link(
-        message.reply_to_message, "YTDL"
-    )
-    LOGGER.info(dl_url)
-    # if len(message.command) > 1:
-    # if message.command[1] == "gdrive":
-    # with open('blame_my_knowledge.txt', 'w+') as gg:
-    # gg.write("I am noob and don't know what to do that's why I have did this")
-    LOGGER.info(cf_name)
+    if message.reply_to_message:
+        dl_url, cf_name, yt_dl_user_name, yt_dl_pass_word = await extract_link(
+            message.reply_to_message, "YTDL"
+        )
+        LOGGER.info(dl_url)
+        LOGGER.info(cf_name)
+    elif len(message.command) == 2:
+        dl_url = message.command[1]
+        LOGGER.info(dl_url)
+        cf_name = None
+        yt_dl_user_name = None
+        yt_dl_pass_word = None
+        cf_name = None
+    else:
+        await i_m_sefg.edit("😔 No downloading source provided 🙄")
+        return
     if dl_url is not None:
         await i_m_sefg.edit_text("extracting links")
-        current_user_id = message.from_user.id
         # create an unique directory
         user_working_dir = os.path.join(DOWNLOAD_LOCATION, str(current_user_id))
         # create download directory, if not exist
@@ -191,13 +161,13 @@ async def incoming_youtube_dl_f(client, message):
             dl_url, cf_name, yt_dl_user_name, yt_dl_pass_word, user_working_dir
         )
         if thumb_image is not None:
-            print(thumb_image)
             req = requests.get(f"{thumb_image}")
-            gau_tam = f"{current_user_id}.jpg"
-            open(gau_tam, "wb").write(req.content)
+            thumb_img = f"{current_user_id}.jpg"
+            with open(thumb_img, "wb") as thumb:
+                thumb.write(req.content)
             await message.reply_photo(
                 # text_message,
-                photo=gau_tam,
+                photo=thumb_img,
                 quote=True,
                 caption=text_message,
                 reply_markup=reply_markup,
@@ -213,24 +183,32 @@ async def incoming_youtube_dl_f(client, message):
 
 
 # playlist
-
-
 async def g_yt_playlist(client, message):
     """ /pytdl command """
-    # i_m_sefg = await message.reply_text("Processing...you should wait🤗", quote=True)
+    user_command = message.command[0]
     usr_id = message.from_user.id
-    G_DRIVE = False
-    if len(message.command) > 1:
-        if message.command[1] == "gdrive":
-            G_DRIVE = True
-    if "youtube.com/playlist" in message.reply_to_message.text:
+    is_cloud = False
+    url = None
+    if message.reply_to_message:
+        url = message.reply_to_message.text
+        if user_command == GPYTDL_COMMAND.lower():
+            is_cloud = True
+    elif len(message.command) == 2:
+        url = message.command[1]
+        if user_command == GPYTDL_COMMAND.lower():
+            is_cloud = True
+    else:
+        await message.reply_text("😔 No downloading source provided 🙄", quote=True)
+        return
+    if "youtube.com/playlist" in url:
         i_m_sefg = await message.reply_text(
-            "Downloading...you should wait🤗", quote=True
+            f"💀 Downloading for you <a href='tg://user?id={usr_id}'>🤗</a>",
+            parse_mode="html",
         )
-        await yt_playlist_downg(message.reply_to_message, i_m_sefg, G_DRIVE)
+        await yt_playlist_downg(message, i_m_sefg, client, is_cloud)
 
     else:
-        await message.reply_text("Reply to youtube playlist link only 🙄")
+        await message.reply_text("YouTube playlist link only 🙄", quote=True)
 
 
 #
@@ -256,19 +234,29 @@ async def g_clonee(client, message):
 
 async def rename_tg_file(client, message):
     usr_id = message.from_user.id
+    if not message.reply_to_message:
+        await message.reply("😔 No downloading source provided 🙄", quote=True)
+        return
     if len(message.command) > 1:
-        new_name = "/app/" + message.text.split(" ", maxsplit=1)[1].strip()
-        file = await download_tg(client, message)
+        new_name = (
+            str(Path().resolve()) + "/" + message.text.split(" ", maxsplit=1)[1].strip()
+        )
+        file, mess_age = await download_tg(client, message)
         try:
             if file:
                 os.rename(file, new_name)
             else:
                 return
         except Exception as g_g:
+            LOGGER.error(g_g)
             await message.reply_text("g_g")
         response = {}
-        final_response = await upload_to_tg(message, new_name, usr_id, response)
+        final_response = await upload_to_tg(
+            mess_age, new_name, usr_id, response, client
+        )
         LOGGER.info(final_response)
+        if not final_response:
+            return
         try:
             message_to_send = ""
             for key_f_res_se in final_response:
@@ -297,4 +285,6 @@ async def rename_tg_file(client, message):
             LOGGER.info(pe)
 
     else:
-        await message.reply_text("Provide new name of the file with extension 😐")
+        await message.reply_text(
+            "😔 Provide new name of the file with extension 😐", quote=True
+        )
